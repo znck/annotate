@@ -1,0 +1,12 @@
+{
+  "name": "annotate",
+  "version": "0.0.0",
+  "description": "Open Image Annotation Tool",
+  "main": "electron.js",
+  "dependencies": {
+    "vue": "^2.0.1",
+    "vue-electron": "^1.0.0"
+  },
+  "devDependencies": {},
+  "author": "Rahul Kadyan <hi@znck.me>"
+}
