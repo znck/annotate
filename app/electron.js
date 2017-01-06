@@ -41,6 +41,8 @@ function createWindow () {
     mainWindow = null
   })
 
+  require('./menu')
+
   console.log('mainWindow opened')
 }
 

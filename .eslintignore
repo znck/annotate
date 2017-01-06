@@ -4,3 +4,4 @@ app/electron.js
 test/unit/coverage/**
 test/unit/*.js
 test/e2e/*.js
+app/src/modes/create.js

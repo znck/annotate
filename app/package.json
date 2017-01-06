@@ -4,8 +4,11 @@
   "description": "Open Image Annotation Tool",
   "main": "electron.js",
   "dependencies": {
+    "createjs-easeljs": "^0.8.2",
+    "lodash": "^4.17.4",
     "vue": "^2.0.1",
-    "vue-electron": "^1.0.0"
+    "vue-electron": "^1.0.0",
+    "vuex": "^2.1.1"
   },
   "devDependencies": {},
   "author": "Rahul Kadyan <hi@znck.me>"
