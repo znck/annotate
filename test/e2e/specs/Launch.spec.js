@@ -1,15 +1,15 @@
-import utils from '../utils'
+import utils from '../utils';
 
-import { name } from '../../../config'
+import { name } from '../../../config';
 
-describe('Launch', function () {
-  beforeEach(utils.beforeEach)
-  afterEach(utils.afterEach)
+describe('Launch', () => {
+  beforeEach(utils.beforeEach);
+  afterEach(utils.afterEach);
 
-  it('shows the proper application title', function () {
+  it('shows the proper application title', function launchApplication() {
     return this.app.client.getTitle()
-      .then(title => {
-        expect(title).to.equal(name)
-      })
-  })
-})
+      .then((title) => {
+        expect(title).to.equal(name);
+      });
+  });
+});

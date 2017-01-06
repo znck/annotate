@@ -8,6 +8,18 @@ const BrowserWindow = electron.BrowserWindow
 let mainWindow
 let config = {}
 
+exports.openFiles = function openFiles () {
+  console.log('openFiles');
+  const opts = {
+    title: 'Select images.',
+    properties: [ 'openFile', 'openDirectory', 'multiSelections' ],
+  };
+  electron.dialog.showOpenDialog(mainWindow, opts, function (selectedPaths) {
+    if (!Array.isArray(selectedPaths)) return;
+    mainWindow.webContents.send('onOpen', selectedPaths);
+  });
+};
+
 if (process.env.NODE_ENV === 'development') {
   config = require('../config')
   config.url = `http://localhost:${config.port}`
@@ -41,7 +53,7 @@ function createWindow () {
     mainWindow = null
   })
 
-  require('./menu')
+  require('./menu');
 
   console.log('mainWindow opened')
 }

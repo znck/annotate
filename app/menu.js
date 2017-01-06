@@ -1,138 +1,95 @@
-const {app, Menu} = require('electron')
+/* eslint-disable */
+const { app, Menu, dialog } = require('electron');
+const openFiles = require('./electron').openFiles;
+/* eslint-enable */
 
 const template = [
   {
-    label: 'Edit',
+    label: 'File',
     submenu: [
       {
-        role: 'undo'
+        label: 'Open Files...',
+        accelerator: 'CmdOrCtrl+O',
+        role: 'open',
+        click: () => openFiles(),
       },
-      {
-        role: 'redo'
-      },
-      {
-        type: 'separator'
-      },
-      {
-        role: 'delete'
-      }
-    ]
-  },
-  {
-    label: 'View',
-    submenu: [
-      {
-        role: 'resetzoom'
-      },
-      {
-        role: 'zoomin'
-      },
-      {
-        role: 'zoomout'
-      },
-      {
-        type: 'separator'
-      }
-    ]
+    ],
   },
   {
     role: 'window',
     submenu: [
       {
-        role: 'minimize'
+        role: 'minimize',
       },
       {
-        role: 'close'
-      }
-    ]
+        role: 'close',
+      },
+    ],
   },
   {
     role: 'help',
-    submenu: [
-      {
-        label: 'Learn More',
-        click () { require('electron').shell.openExternal('http://electron.atom.io') }
-      }
-    ]
-  }
-]
+  },
+];
 
 if (process.platform === 'darwin') {
   template.unshift({
     label: app.getName(),
     submenu: [
       {
-        role: 'about'
+        role: 'about',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
         role: 'services',
-        submenu: []
+        submenu: [],
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
-        role: 'hide'
+        role: 'hide',
       },
       {
-        role: 'hideothers'
+        role: 'hideothers',
       },
       {
-        role: 'unhide'
+        role: 'unhide',
       },
       {
-        type: 'separator'
+        type: 'separator',
       },
       {
-        role: 'quit'
-      }
-    ]
-  })
-  // Edit menu.
-  template[1].submenu.push(
-    {
-      type: 'separator'
-    },
-    {
-      label: 'Speech',
-      submenu: [
-        {
-          role: 'startspeaking'
-        },
-        {
-          role: 'stopspeaking'
-        }
-      ]
-    }
-  )
+        role: 'quit',
+      },
+    ],
+  });
   // Window menu.
   template[3].submenu = [
     {
       label: 'Close',
       accelerator: 'CmdOrCtrl+W',
-      role: 'close'
+      role: 'close',
     },
     {
       label: 'Minimize',
       accelerator: 'CmdOrCtrl+M',
-      role: 'minimize'
+      role: 'minimize',
     },
     {
       label: 'Zoom',
-      role: 'zoom'
+      role: 'zoom',
     },
     {
-      type: 'separator'
+      type: 'separator',
     },
     {
       label: 'Bring All to Front',
-      role: 'front'
-    }
-  ]
+      role: 'front',
+    },
+  ];
 }
 
-const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)
+const menu = Menu.buildFromTemplate(template);
+Menu.setApplicationMenu(menu);

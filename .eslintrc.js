@@ -4,23 +4,32 @@ module.exports = {
   parserOptions: {
     sourceType: 'module'
   },
+  extends: 'airbnb-base',
+  // required to lint *.vue files
   env: {
-    browser: true,
-    node: true
+    node: true,
   },
-  extends: 'standard',
   plugins: [
     'html'
   ],
   globals: {
-    'createjs': true
+    window: true,
   },
-  'rules': {
-    // allow paren-less arrow functions
-    'arrow-parens': 0,
-    // allow async-await
-    'generator-star-spacing': 0,
+  settings: {
+    'import/alias': {
+      src: './app/src',
+    },
+  },
+  // add your custom rules here
+  rules: {
+    // don't require .vue extension when importing
+    'import/extensions': ['error', 'always', {
+      'js': 'never',
+    }],
     // allow debugger during development
-    'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0
+    'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
+    'no-underscore-dangle': 'off',
+    'no-param-reassign': 'off',
+    'class-methods-use-this': 'off',
   }
-}
+};

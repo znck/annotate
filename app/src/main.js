@@ -1,14 +1,15 @@
-import Vue from 'vue'
-import Electron from 'vue-electron'
-import store from './store'
+import Vue from 'vue';
+import Electron from 'vue-electron';
+import store from './store';
+import App from './App.vue';
 
-Vue.use(Electron)
-Vue.config.debug = true
 
-import App from './App'
+Vue.use(Electron);
+Vue.config.debug = true;
 
 /* eslint-disable no-new */
 new Vue({
+  name: 'Annotate',
   store,
-  ...App
-}).$mount('#app')
+  ...App,
+}).$mount('#app');

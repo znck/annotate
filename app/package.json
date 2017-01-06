@@ -4,7 +4,9 @@
   "description": "Open Image Annotation Tool",
   "main": "electron.js",
   "dependencies": {
-    "createjs-easeljs": "^0.8.2",
+    "bootstrap": "next",
+    "electron": "^1.4.13",
+    "glob": "^7.1.1",
     "lodash": "^4.17.4",
     "vue": "^2.0.1",
     "vue-electron": "^1.0.0",
