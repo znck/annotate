@@ -11,9 +11,14 @@
         <label class="btn btn-outline-secondary mb-0" :class="{ active: mode === 'poly' }">
           <input type="radio" value="poly" v-model="mode"> FreeForm
         </label>
+        <label class="btn btn-outline-secondary mb-0" :class="{ active: mode === 'del' }">
+          <input type="radio" value="del" v-model="mode"> Delete
+        </label>
       </div>
-
-      <div class="btn-group float-right">
+      <div class="fl-auto text-center" style="align-self: center">
+        {{ title }}
+      </div>
+      <div class="btn-group">
         <a href class="btn btn-outline-secondary" @click.prevent="prev">Save &amp; Prev</a>
         <a class="btn btn-outline-secondary">{{ index + 1 }} of {{ files.length }}</a>
         <a href class="btn btn-outline-secondary" @click.prevent="next">Save &amp; Next</a>
@@ -22,7 +27,7 @@
     <div class="workarea">
       <dropzone v-if="hasDragOver"></dropzone>
       <placeholder v-if="!hasDragOver && files.length === 0"></placeholder>
-      <canvas-box v-if="current && !hasDragOver" :file="current" :action="mode" ref="canvas"></canvas-box>
+      <canvas-box v-if="current && !hasDragOver" :file="current" :action="mode" @offsetUpdated="onOffsetUpdated" ref="canvas"></canvas-box>
     </div>
   </div>
 </template>
@@ -31,11 +36,14 @@
 import { ipcRenderer } from 'electron';
 import unique from 'lodash/array/unique';
 import fs from 'fs';
+import { basename } from 'path';
 import glob from 'glob';
+import { mapActions } from 'vuex';
 
 import CanvasBox from './components/Canvas.vue';
 import Placeholder from './components/Placeholder.vue';
 import Dropzone from './components/Dropzone.vue';
+import { historyPlugin } from './store';
 
 export default {
   components: {
@@ -47,21 +55,46 @@ export default {
     return {
       files: [],
       index: 0,
-      mode: 'none',
       hasDragOver: false,
+      offset: {},
     };
   },
   created() {
     ipcRenderer.on('onOpen', (_, paths) => {
       this.onOpen(paths);
     });
+    ipcRenderer.on('setmode', (_, mode) => {
+      this.setMode(mode);
+    });
+    ipcRenderer.on('undo', () => {
+      historyPlugin.undo();
+    });
+    ipcRenderer.on('redo', () => {
+      historyPlugin.redo();
+    });
   },
   computed: {
+    title() {
+      if (this.current) return basename(this.current);
+
+      return '...';
+    },
     current() {
       return this.files[this.index];
     },
+    mode: {
+      get() {
+        return this.$store.state.mode;
+      },
+      set(mode) {
+        this.setMode(mode);
+      },
+    },
   },
   methods: {
+    onOffsetUpdated(value) {
+      this.offset = value;
+    },
     onDragStart() {
       if (this.hasDragOver === false) this.hasDragOver = true;
     },
@@ -104,6 +137,7 @@ export default {
     next() {
       if (this.index < this.files.length - 1) this.index += 1;
     },
+    ...mapActions(['setMode']),
   },
 };
 </script>
@@ -116,7 +150,7 @@ $enable-transitions:        true ;
 $enable-hover-media-query:  false;
 $enable-grid-classes:       true;
 $enable-print-styles:       true;
-$font-family-base: inherit;
+$font-family-base:        inherit;
 
 $btn-secondary-border: #777;
 
@@ -134,13 +168,18 @@ body { height: 100%; font-size: 14px; }
   display: flex;
   height: 100%;
   flex-direction: column;
+  padding: 8px;
 }
 .workarea {
   flex: 1;
   display: flex;
 }
 .controls {
-  padding: 8px;
+  padding: 8px 0;
+  display: flex;
+}
+.fl-auto {
+  flex: 1;
 }
 .btn {
   cursor: pointer;

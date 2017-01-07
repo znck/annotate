@@ -9,16 +9,26 @@ let mainWindow
 let config = {}
 
 exports.openFiles = function openFiles () {
-  console.log('openFiles');
   const opts = {
     title: 'Select images.',
     properties: [ 'openFile', 'openDirectory', 'multiSelections' ],
   };
   electron.dialog.showOpenDialog(mainWindow, opts, function (selectedPaths) {
     if (!Array.isArray(selectedPaths)) return;
+    if (!mainWindow) mainWindow = createWindow();
     mainWindow.webContents.send('onOpen', selectedPaths);
   });
 };
+
+exports.choose = function choose (mode) {
+  if (!mainWindow) return;
+  mainWindow.webContents.send('setmode', mode);
+};
+
+exports.sendEvent = function sendEvent (event, payload) {
+  if (!mainWindow) return;
+  mainWindow.webContents.send(event, payload);
+}
 
 if (process.env.NODE_ENV === 'development') {
   config = require('../config')

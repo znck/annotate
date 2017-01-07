@@ -1,5 +1,5 @@
 <template>
-<div class="canvas-container">
+<div class="canvas-container" :class=[action]>
   <canvas id="main" ref="canvas">
 
   </canvas>
@@ -12,11 +12,13 @@ import isNumber from 'lodash/isNumber';
 import debounce from 'lodash/debounce';
 import last from 'lodash/last';
 import fs from 'fs';
+// const electron = require('electron').remote;
 
 import createjs from '../modes/create';
 import Renderer from '../renderer';
 import Rect from '../modes/Rect';
 import Poly from '../modes/Poly';
+import Delete from '../modes/Delete';
 
 import { save, load } from '../modes/helpers';
 
@@ -35,8 +37,8 @@ export default {
     return {
       image: null,
       offset: { x: 0, y: 0, scale: 1 },
-      shapes: [],
       modes: {},
+      shapes: {},
     };
   },
   computed: {
@@ -60,6 +62,7 @@ export default {
     this.modes = {
       rect: new Rect(this.$store, this.stage, this),
       poly: new Poly(this.$store, this.stage, this),
+      del: new Delete(this.$store, this.stage, this),
     };
     this.renderer = new Renderer(this.$store, this.stage, this);
 
@@ -99,7 +102,19 @@ export default {
       const w = image.width;
       const h = image.height;
 
-      this.offset = { x, y, w, h };
+      const scale = image.width / canvas.width;
+
+      this.offset = {
+        x,
+        y,
+        w,
+        h,
+        scale,
+        canvas: { w: canvas.width, h: canvas.height },
+        image: { w: image.width, h: image.height },
+      };
+
+      this.$emit('offsetUpdated', this.offset);
     },
     toImage({ x, y }) {
       return { x: this.toImageX(x), y: this.toImageY(y) };
@@ -131,20 +146,10 @@ export default {
     isValidPoint({ x, y }) {
       const { width, height } = this.image.$image;
 
-      return x >= 0 && y >= 0 && x < width && y < height;
+      return x >= 0 && y >= 0 && x <= width && y <= height;
     },
-    redraw() {
-      this.image.x = this.offset.x;
-      this.image.y = this.offset.y;
-
-      const shapes = this.rois.map(roi => this.renderer.drawRoI(roi));
-      this.shapes.forEach(shape => this.stage.removeChild(shape));
-      this.shapes = shapes;
-      this.shapes.forEach(shape => this.stage.addChild(shape));
-
-      if (this.mode) this.mode.redraw();
-
-      this.stage.update();
+    subscribeEvents(payload) {
+      payload.shape.on('click', event => this.$emit('shape.click', event, payload));
     },
     fixCanvasSize() {
       if (!this.$refs.canvas) return;
@@ -154,8 +159,48 @@ export default {
       this.$refs.canvas.width = width;
       this.$refs.canvas.height = height;
     },
+    redraw() {
+      this.image.x = this.offset.x;
+      this.image.y = this.offset.y;
+
+      Object.values(this.shapes).forEach(shape => this.stage.removeChild(shape));
+
+      this.shapes = {};
+
+      this.rois.forEach((roi, index) => {
+        const shape = this.renderer.drawRoI(roi);
+        this.stage.addChild(shape);
+        this.subscribeEvents({ shape, index, roi });
+        this.shapes[roi.id] = shape;
+      });
+
+      if (this.mode) this.mode.redraw();
+
+      this.stage.update();
+    },
   },
   watch: {
+    rois(rois) {
+      const ids = [];
+      rois.forEach((roi, index) => {
+        if (!(roi.id in this.shapes)) {
+          const shape = this.renderer.drawRoI(roi);
+          this.stage.addChild(shape);
+          this.shapes[roi.id] = shape;
+          this.subscribeEvents({ shape, index, roi });
+        }
+        ids.push(roi.id);
+      });
+
+      Object.keys(this.shapes).forEach((id) => {
+        if (ids.indexOf(parseInt(id, 10)) < 0) {
+          this.stage.removeChild(this.shapes[id]);
+          delete this.shapes[id];
+        }
+      });
+
+      this.stage.update();
+    },
     file(c, o) {
       if (this.rois.length) {
         const filename = `${o}.tsv`;
@@ -169,29 +214,7 @@ export default {
     },
     mode(mode, old) {
       if (old) old.stop();
-      if (mode) {
-        mode.start();
-        this.$el.classList.add('crosshair');
-      } else {
-        this.$el.classList.remove('crosshair');
-      }
-    },
-    rois(rois) {
-      if (rois.length > this.shapes.length) {
-        const paths = rois.slice(this.shapes.length);
-        const shapes = paths.map(path => this.renderer.drawRoI(path));
-
-        // console.log(`Adding ${paths.length} new rois`);
-
-        shapes.forEach(shape => this.stage.addChild(shape));
-        this.shapes.push(...shapes);
-        this.stage.update();
-      } else if (rois.length < this.shapes.length) {
-        const shapes = this.shapes.splice(rois.length);
-
-        shapes.forEach(shape => this.stage.removeChild(shape));
-        this.stage.update();
-      }
+      if (mode) mode.start();
     },
     offset() {
       this.$nextTick(() => this.redraw());
@@ -200,11 +223,14 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .canvas-container {
   flex: 1;
-}
-.canvas-container.crosshair {
-  cursor: crosshair;
+  &.rect, &.poly {
+    cursor: crosshair;
+  }
+  &.del {
+    cursor: not-allowed;
+  }
 }
 </style>

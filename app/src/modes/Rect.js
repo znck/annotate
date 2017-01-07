@@ -12,8 +12,18 @@ export default class Rect {
     this.hover = null;
     this.active = false;
 
+    this.vm.$watch(function points() {
+      return this.$store.state.points;
+    }, () => {
+      if (!this.active) return;
+
+      this.drawRect();
+      this.stage.update();
+    });
+
     this.stage.on('stagemouseup', (event) => {
       if (!this.active) return;
+      if (event.nativeEvent.button !== 0) return;
       // console.log('Rect - UP');
       const point = this.vm.toImage({
         x: event.stageX,
@@ -41,7 +51,6 @@ export default class Rect {
     // console.log('Rect - stop');
     this.active = false;
     this.stage.removeChild(this.shape);
-    this.hover = null;
 
     if (this.state.points.length) {
       this.store.commit('CLEAR_POINTS');
@@ -54,12 +63,13 @@ export default class Rect {
   }
 
   drawRect() {
+    this.stage.removeChild(this.shape);
     if (!this.state.points.length) return;
+    if (!this.hover) return;
 
     const start = this.vm.toCanvas(this.state.points[0]);
     const { x, y, w, h } = toRect(start, this.hover);
 
-    this.stage.removeChild(this.shape);
     this.shape = new createjs.Shape();
     this.shape.graphics
       .beginFill(this.state.fill)

@@ -15,8 +15,19 @@ export default class Poly {
     this.threshold = 10;
     this.active = false;
 
-    this.stagemouseup = (event) => {
+    this.vm.$watch(function points() {
+      return this.$store.state.points;
+    }, () => {
       if (!this.active) return;
+
+      this.drawPoly();
+      this.drawLine();
+      this.stage.update();
+    });
+
+    this.stage.on('stagemouseup', (event) => {
+      if (!this.active) return;
+      if (event.nativeEvent.button !== 0) return;
 
       // console.log('Poly - UP');
       const point = this.vm.toImage({
@@ -27,22 +38,20 @@ export default class Poly {
       if (this.vm.isValidPoint(point) && this.isNotIntersecting(point)) {
         this.addPoint(point);
       }
-    };
+    });
 
-    this.stagemousemove = (event) => {
+    this.stage.on('stagemousemove', (event) => {
       if (!this.active) return;
 
       this.hover = { x: event.stageX, y: event.stageY };
       this.drawLine();
       this.stage.update();
-    };
+    });
   }
 
   start() {
     // console.log('Poly - start');
     this.active = true;
-    this.stage.on('stagemouseup', this.stagemouseup);
-    this.stage.on('stagemousemove', this.stagemousemove);
   }
 
   stop() {
@@ -50,9 +59,6 @@ export default class Poly {
     this.active = false;
     this.stage.removeChild(this.shape);
     this.stage.removeChild(this.line);
-    this.stage.off('stagemousemove', this.stagemousemove);
-    this.stage.off('stagemouseup', this.stagemouseup);
-    this.hove = null;
 
     if (this.state.points.length) {
       this.store.commit('CLEAR_POINTS');
@@ -66,12 +72,12 @@ export default class Poly {
   }
 
   drawLine() {
+    this.stage.removeChild(this.line);
     if (!this.state.points.length) return; // Empty.
+    if (!this.hover) return;
 
     const last = this.vm.toCanvas(this.state.points[this.state.points.length - 1]);
     const point = this.hover;
-
-    this.stage.removeChild(this.line);
 
     this.line = new createjs.Shape();
     this.line.graphics

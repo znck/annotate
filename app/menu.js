@@ -1,6 +1,6 @@
 /* eslint-disable */
 const { app, Menu, dialog } = require('electron');
-const openFiles = require('./electron').openFiles;
+const { openFiles, choose, sendEvent } = require('./electron');
 /* eslint-enable */
 
 const template = [
@@ -13,6 +13,44 @@ const template = [
         role: 'open',
         click: () => openFiles(),
       },
+    ],
+  },
+  {
+    label: 'Edit',
+    submenu: [
+      {
+        label: 'None',
+        accelerator: 'CmdOrCtrl+N',
+        click: () => choose('none'),
+      },
+      {
+        label: 'Rect',
+        accelerator: 'CmdOrCtrl+r',
+        click: () => choose('rect'),
+      },
+      {
+        label: 'FreeForm',
+        accelerator: 'CmdOrCtrl+f',
+        click: () => choose('poly'),
+      },
+      {
+        label: 'Delete',
+        accelerator: 'CmdOrCtrl+d',
+        click: () => choose('del'),
+      },
+      {
+        type: 'separator',
+      },
+      {
+        label: 'Undo',
+        accelerator: 'CmdOrCtrl+Z',
+        click: () => sendEvent('undo'),
+      },
+      {
+        label: 'Redo',
+        accelerator: 'Shift+CmdOrCtrl+Z',
+        click: () => sendEvent('redo'),
+      }
     ],
   },
   {
@@ -65,31 +103,8 @@ if (process.platform === 'darwin') {
       },
     ],
   });
-  // Window menu.
-  template[3].submenu = [
-    {
-      label: 'Close',
-      accelerator: 'CmdOrCtrl+W',
-      role: 'close',
-    },
-    {
-      label: 'Minimize',
-      accelerator: 'CmdOrCtrl+M',
-      role: 'minimize',
-    },
-    {
-      label: 'Zoom',
-      role: 'zoom',
-    },
-    {
-      type: 'separator',
-    },
-    {
-      label: 'Bring All to Front',
-      role: 'front',
-    },
-  ];
 }
 
 const menu = Menu.buildFromTemplate(template);
+
 Menu.setApplicationMenu(menu);
