@@ -41,7 +41,7 @@ export default class Renderer {
   drawRoI(roi) {
     if (roi.type === 'rectangle') {
       const { x, y } = this.vm.toCanvas(roi.position);
-      const { w, h } = roi.size;
+      const { w, h } = this.vm.toCanvasScale(roi.size);
 
       return rectangle({ x, y, w, h }, roi._meta);
     }

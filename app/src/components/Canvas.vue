@@ -9,6 +9,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import isNumber from 'lodash/isNumber';
+import int from 'lodash/toInteger';
 import debounce from 'lodash/debounce';
 import last from 'lodash/last';
 import fs from 'fs';
@@ -19,6 +20,7 @@ import Renderer from '../renderer';
 import Rect from '../modes/Rect';
 import Poly from '../modes/Poly';
 import Delete from '../modes/Delete';
+import Drag from '../modes/Drag';
 
 import { save, load } from '../modes/helpers';
 
@@ -47,6 +49,11 @@ export default {
     },
     ...mapGetters(['rois']),
   },
+  created() {
+    this.$on('scale', (scale) => {
+      this.offset.scale = scale;
+    });
+  },
   mounted() {
     window.addEventListener('resize', debounce(() => {
       this.fixCanvasSize();
@@ -63,6 +70,7 @@ export default {
       rect: new Rect(this.$store, this.stage, this),
       poly: new Poly(this.$store, this.stage, this),
       del: new Delete(this.$store, this.stage, this),
+      drag: new Drag(this.$store, this.stage, this),
     };
     this.renderer = new Renderer(this.$store, this.stage, this);
 
@@ -84,46 +92,49 @@ export default {
 
       this.image = new createjs.Bitmap(image);
       this.image.$image = image;
+      this.image.$dims = { width: image.width, height: image.height };
 
       const filename = `${this.file}.tsv`;
       const rois = load(filename);
+      const canvas = this.$refs.canvas;
+
       this.stage.addChild(this.image);
       if (rois.length) {
         this.$store.commit('ADD_ROI', rois);
       }
       this.stage.update();
+      this.offset = {
+        x: 0,
+        y: 0,
+        w: image.width,
+        h: image.height,
+        scale: 1,
+        original: { w: image.width, h: image.height },
+        canvas: { w: canvas.width, h: canvas.height },
+      };
       this.calcOffset();
     },
     calcOffset() {
       const canvas = this.$refs.canvas;
-      const image = this.image.$image;
-      const x = parseInt((canvas.width - image.width) / 2, 10);
-      const y = parseInt((canvas.height - image.height) / 2, 10);
-      const w = image.width;
-      const h = image.height;
+      const { width, height } = this.image.$dims;
 
-      const scale = image.width / canvas.width;
+      this.offset.w = int(width * this.offset.scale);
+      this.offset.h = int(height * this.offset.scale);
 
-      this.offset = {
-        x,
-        y,
-        w,
-        h,
-        scale,
-        canvas: { w: canvas.width, h: canvas.height },
-        image: { w: image.width, h: image.height },
-      };
+      const x = parseInt((canvas.width - this.offset.w) / 2, 10);
+      const y = parseInt((canvas.height - this.offset.h) / 2, 10);
 
-      this.$emit('offsetUpdated', this.offset);
+      this.offset.x = x;
+      this.offset.y = y;
     },
     toImage({ x, y }) {
       return { x: this.toImageX(x), y: this.toImageY(y) };
     },
     toImageX(x) {
-      return x - this.offset.x;
+      return int((x - this.offset.x) / this.offset.scale);
     },
     toImageY(y) {
-      return y - this.offset.y;
+      return int((y - this.offset.y) / this.offset.scale);
     },
     toCanvas({ x, y }) {
       return { x: this.toCanvasX(x), y: this.toCanvasY(y) };
@@ -135,18 +146,28 @@ export default {
         return { w: this.toCanvasScale(w), h: this.toCanvasScale(h) };
       }
 
-      return this.offset.scale * x;
+      return int(this.offset.scale * x);
     },
     toCanvasX(x) {
-      return x + this.offset.x;
+      return int((x * this.offset.scale) + this.offset.x);
     },
     toCanvasY(y) {
-      return y + this.offset.y;
+      return int((y * this.offset.scale) + this.offset.y);
     },
     isValidPoint({ x, y }) {
       const { width, height } = this.image.$image;
 
       return x >= 0 && y >= 0 && x <= width && y <= height;
+    },
+    toValidPoint({ x, y }) {
+      const { width, height } = this.image.$image;
+
+      if (x < 0) x = 0;
+      else if (x > width) x = width;
+      if (y < 0) y = 0;
+      else if (y > height) y = height;
+
+      return { x, y };
     },
     subscribeEvents(payload) {
       payload.shape.on('click', event => this.$emit('shape.click', event, payload));
@@ -162,6 +183,7 @@ export default {
     redraw() {
       this.image.x = this.offset.x;
       this.image.y = this.offset.y;
+      this.image.scaleX = this.image.scaleY = this.offset.scale;
 
       Object.values(this.shapes).forEach(shape => this.stage.removeChild(shape));
 
@@ -216,8 +238,17 @@ export default {
       if (old) old.stop();
       if (mode) mode.start();
     },
-    offset() {
+    'offset.x': function onOffsetXChanged() {
       this.$nextTick(() => this.redraw());
+    },
+    'offset.y': function onOffsetYChanged() {
+      this.$nextTick(() => this.redraw());
+    },
+    'offset.scale': function onScaleChanged() {
+      this.calcOffset();
+    },
+    offset(offset) {
+      this.$emit('offsetUpdated', offset);
     },
   },
 };
@@ -231,6 +262,12 @@ export default {
   }
   &.del {
     cursor: not-allowed;
+  }
+  &.drag {
+
+  }
+  &.drag.dragging {
+    cursor: move;
   }
 }
 </style>

@@ -29,9 +29,7 @@ export default class Rect {
         x: event.stageX,
         y: event.stageY,
       });
-      if (this.vm.isValidPoint(point)) {
-        this.addPoint(point);
-      }
+      this.addPoint(this.vm.toValidPoint(point));
     });
 
     this.stage.on('stagemousemove', (event) => {

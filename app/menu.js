@@ -39,6 +39,11 @@ const template = [
         click: () => choose('del'),
       },
       {
+        label: 'Adjust',
+        accelerator: 'CmdOrCtrl+a',
+        click: () => choose('drag'),
+      },
+      {
         type: 'separator',
       },
       {
@@ -50,6 +55,31 @@ const template = [
         label: 'Redo',
         accelerator: 'Shift+CmdOrCtrl+Z',
         click: () => sendEvent('redo'),
+      }
+    ],
+  },
+  {
+    label: 'View',
+    submenu: [
+      {
+        label: 'Original Size',
+        accelerator: 'CmdOrCtrl+0',
+        click: () => sendEvent('zoom.reset'),
+      },
+      {
+        label: 'Fit Image',
+        accelerator: 'CmdOrCtrl+1',
+        click: () => sendEvent('zoom.fit'),
+      },
+      {
+        label: 'Zoom in',
+        accelerator: 'Shift+CmdOrCtrl+=',
+        click: () => sendEvent('zoom.in'),
+      },
+      {
+        label: 'Zoom out',
+        accelerator: 'CmdOrCtrl+-',
+        click: () => sendEvent('zoom.out'),
       }
     ],
   },

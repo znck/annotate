@@ -35,9 +35,7 @@ export default class Poly {
         y: event.stageY,
       });
 
-      if (this.vm.isValidPoint(point) && this.isNotIntersecting(point)) {
-        this.addPoint(point);
-      }
+      this.addPoint(this.vm.toValidPoint(point));
     });
 
     this.stage.on('stagemousemove', (event) => {

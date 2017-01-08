@@ -14,9 +14,13 @@
         <label class="btn btn-outline-secondary mb-0" :class="{ active: mode === 'del' }">
           <input type="radio" value="del" v-model="mode"> Delete
         </label>
+
+        <label class="btn btn-outline-secondary mb-0" :class="{ active: mode === 'drag' }">
+          <input type="radio" value="drag" v-model="mode"> Adjust
+        </label>
       </div>
       <div class="fl-auto text-center" style="align-self: center">
-        {{ title }}
+        {{ title }} ({{ scale }}%)
       </div>
       <div class="btn-group">
         <a href class="btn btn-outline-secondary" @click.prevent="prev">Save &amp; Prev</a>
@@ -72,12 +76,35 @@ export default {
     ipcRenderer.on('redo', () => {
       historyPlugin.redo();
     });
+    ipcRenderer.on('zoom.reset', () => {
+      if (this.$refs.canvas) this.$refs.canvas.$emit('scale', 1);
+    });
+    ipcRenderer.on('zoom.fit', () => {
+      if (this.$refs.canvas) {
+        const scale = this.offset.canvas.w / this.offset.original.w;
+
+        this.$refs.canvas.$emit('scale', scale);
+      }
+    });
+    ipcRenderer.on('zoom.in', () => {
+      if (this.$refs.canvas && this.offset.scale < 4) {
+        this.$refs.canvas.$emit('scale', this.offset.scale + 0.2);
+      }
+    });
+    ipcRenderer.on('zoom.out', () => {
+      if (this.$refs.canvas && this.offset.scale >= 0.3) {
+        this.$refs.canvas.$emit('scale', this.offset.scale - 0.2);
+      }
+    });
   },
   computed: {
     title() {
       if (this.current) return basename(this.current);
 
       return '...';
+    },
+    scale() {
+      return parseInt(this.offset.scale * 100, 10);
     },
     current() {
       return this.files[this.index];
