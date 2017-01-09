@@ -96,6 +96,14 @@ export default {
         this.$refs.canvas.$emit('scale', this.offset.scale - 0.2);
       }
     });
+    ipcRenderer.on('next', () => this.next());
+    ipcRenderer.on('prev', () => this.prev());
+    ipcRenderer.on('skip.right', () => {
+      const index = this.index + this.files.slice(this.index)
+        .findIndex(file => !fs.existsSync(`${file}.tsv`));
+
+      if (index > -1) this.index = index;
+    });
   },
   computed: {
     title() {

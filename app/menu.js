@@ -55,7 +55,25 @@ const template = [
         label: 'Redo',
         accelerator: 'Shift+CmdOrCtrl+Z',
         click: () => sendEvent('redo'),
-      }
+      },
+      {
+        type: 'separator',
+      },
+      {
+        label: 'Previous',
+        accelerator: 'Left',
+        click: () => sendEvent('prev'),
+      },
+      {
+        label: 'Next',
+        accelerator: 'Right',
+        click: () => sendEvent('next'),
+      },
+      {
+        label: 'Skip Annotated',
+        accelerator: 'CmdOrCtrl+Right',
+        click: () => sendEvent('skip.right'),
+      },
     ],
   },
   {
